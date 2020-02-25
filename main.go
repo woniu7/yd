@@ -8,6 +8,7 @@ import (
 	"net/http"
 	"net/url"
 	"os"
+	"os/exec"
 	"strings"
 	"time"
 )
@@ -26,7 +27,12 @@ type configer struct {
 
 func main() {
 	q := strings.Join(os.Args[1:], " ")
-	configBytes, err := ioutil.ReadFile("config.json")
+	if q == "-" {
+		stdinBytes, err := ioutil.ReadAll(os.Stdin)
+		errPanic(err)
+		q = string(stdinBytes)
+	}
+	configBytes, err := ioutil.ReadFile("config")
 	errPanic(err)
 	config := configer{}
 	errPanic(json.Unmarshal(configBytes, &config))
@@ -59,9 +65,9 @@ func main() {
 	errPanic(err)
 	// fmt.Println(string(respByte))
 	respData := struct {
-		TSpeakURL   string
 		Translation []string
 		SpeakURL    string
+		TSpeakURL   string
 		Basic       struct {
 			Phonetic string
 			Explains []string
@@ -83,6 +89,15 @@ func main() {
 	for _, v := range respData.Web {
 		fmt.Printf("%s: %s\n", v.Key, fmtArr(v.Value))
 	}
+	cmd := exec.Command("/bin/mpg123", respData.TSpeakURL)
+	stdout, err := cmd.Output()
+
+	if err != nil {
+		fmt.Println(err.Error())
+		return
+	}
+
+	fmt.Println(string(stdout))
 }
 
 func fmtArr(ss []string) string {
