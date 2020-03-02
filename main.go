@@ -90,14 +90,14 @@ func main() {
 		fmt.Printf("%s: %s\n", v.Key, fmtArr(v.Value))
 	}
 	cmd := exec.Command("/bin/mpg123", respData.TSpeakURL)
-	stdout, err := cmd.Output()
+	_, err = cmd.Output()
 
 	if err != nil {
 		fmt.Println(err.Error())
 		return
 	}
 
-	fmt.Println(string(stdout))
+	// fmt.Println(string(stdout))
 }
 
 func fmtArr(ss []string) string {
