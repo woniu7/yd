@@ -3,6 +3,7 @@ package main
 import (
 	"crypto/sha256"
 	"encoding/json"
+	"flag"
 	"fmt"
 	"io/ioutil"
 	"net/http"
@@ -26,13 +27,18 @@ type configer struct {
 }
 
 func main() {
-	q := strings.Join(os.Args[1:], " ")
+	speaker := flag.Bool("s", false, "result speaker")
+	flag.Parse()
+	args := flag.Args()
+	q := strings.Join(args, " ")
 	if q == "-" {
 		stdinBytes, err := ioutil.ReadAll(os.Stdin)
 		errPanic(err)
 		q = string(stdinBytes)
 	}
-	configBytes, err := ioutil.ReadFile("config")
+	homeDir, err := os.UserHomeDir()
+	errPanic(err)
+	configBytes, err := ioutil.ReadFile(homeDir + "/.config/yd.json")
 	errPanic(err)
 	config := configer{}
 	errPanic(json.Unmarshal(configBytes, &config))
@@ -89,12 +95,15 @@ func main() {
 	for _, v := range respData.Web {
 		fmt.Printf("%s: %s\n", v.Key, fmtArr(v.Value))
 	}
-	cmd := exec.Command("/bin/mpg123", respData.TSpeakURL)
-	_, err = cmd.Output()
+	//fmt.Println(respData.TSpeakURL)
+	if *speaker {
+		cmd := exec.Command("/bin/mpg123", respData.TSpeakURL)
+		_, err = cmd.Output()
 
-	if err != nil {
-		fmt.Println(err.Error())
-		return
+		if err != nil {
+			fmt.Println(err.Error())
+			return
+		}
 	}
 
 	// fmt.Println(string(stdout))
